@@ -1,0 +1,105 @@
+﻿<h3>AddCompanyUser</h3>
+
+@code {
+
+}
+@page "/add-company-user/{CompId}"
+
+
+
+@attribute [Authorize]
+@inject NavigationManager NavigationManager
+@inject IGenericRepository<CompanyUser> repository;
+@inject IGenericRepository<Industry> industry;
+@inject IGenericRepository<Country> country;
+@inject IGenericRepository<City> jobLocation;
+@inject IJobRepository job;
+@inject IToastService toastService
+@inject ICompanyUserService srv;
+
+<h3>Edit Company User</h3>
+
+@if (companyUser != null)
+{
+    <EditForm Model="model" OnValidSubmit="OnValidSumit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="jobtit">Full Name</label>
+            <InputText id="jobtit" @bind-Value="model.FullName" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="jobdesc">Email</label>
+            <InputText id="jobdesc" @bind-Value="model.EmailId" class="form-control" contenteditable="false"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="exp">Mobile Num</label>
+            <InputText id="exp" @bind-Value="model.MobileNo" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="exp">Password</label>
+            <InputText id="exp" @bind-Value="model.Password" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="fun">Role</label>
+            <InputSelect id="fun" @bind-Value="model.Role" class="form-control">
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+            </InputSelect>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary" @onclick="OnCancel">Cancel</button>
+        <button class="btn btn-info" @onclick="@(() => toastService.ShowInfo("I'm an INFO message"))">Info Toast</button>
+    </EditForm>
+
+}
+
+
+@code {
+    [Parameter]
+    public string CompId { get; set; }
+    private CompanyUser companyUser;
+    private EmployerRegistrationModel model = new();
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (int.TryParse(this.CompId, out int iId))
+        {
+            this.model.CompanyId = iId;
+        }
+
+        companyUser = new CompanyUser();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+    }
+
+
+    private async void OnValidSumit()
+    {
+        var result = await srv.Register2(model);
+        NavigationManager.NavigateTo($"/company-user/{CompId}");
+
+        //if (result.IsSuccess)
+        //{
+        //    toastService.ShowSuccess(result.Message);
+        //    NavigationManager.NavigateTo($"/company-user/{CompId}");
+        //}
+        //else
+        //{
+        //    toastService.ShowError(result.Message);
+        //}
+    }
+
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo($"/company-user/{CompId}");
+    }
+    
+}

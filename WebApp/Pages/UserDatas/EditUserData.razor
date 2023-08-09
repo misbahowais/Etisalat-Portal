@@ -1,0 +1,117 @@
+﻿@page "/edit/{Id}"
+@using CoreBusiness.Models.Masters;
+@inject NavigationManager NavigationManager
+@inject IUserDataRepository userData;
+@inject IToastService toastService
+@inject IHttpClientFactory ClientFactory
+@using System.Text.Json;
+
+<h3>Add User</h3>
+
+@if (user != null)
+{
+    <EditForm Model="user" OnValidSubmit="OnValidSumit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="jobtit">Name</label>
+            <InputText id="name" @bind-Value="user.Name" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="jobdesc">Phone Number</label>
+            <InputText id="phoneNumber" @bind-Value="user.PhoneNumber" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="exp">Email</label>
+            <InputText id="email" @bind-Value="user.Email" class="form-control"></InputText>
+        </div>
+        <div class="form-group">
+            <label for="fun">Capsule Name</label>
+            <InputSelect id="CapsuleName" @bind-Value="user.CapsuleName" class="form-control">
+                @if (dropDown != null)
+                {
+                    @foreach (var i in dropDown)
+                    {
+                        <option value="@i.capsule_id">@i.capsule_serial</option>
+                    }
+                }
+            </InputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary" @onclick="OnCancel">Cancel</button>
+    </EditForm>
+
+}
+
+
+@code {
+
+    [Parameter]
+    public string Id { get; set; }
+
+    private UserData user;
+    private IEnumerable<CapsuleNameModel> dropDown;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ApiCall();
+        user = new UserData();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (int.TryParse(this.Id, out int iId))
+        {
+            var val = userData.GetById(iId);
+            this.user = val;
+        }
+    }
+
+    private async void ApiCall()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://api.spacexdata.com/v3/capsules");
+        request.Headers.Add("Accept", "application/vnd.github.v3+json");
+        request.Headers.Add("User-Agent", "HttpClientFactory-Sample");
+
+        var client = ClientFactory.CreateClient();
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            using var responseStream = await response.Content.ReadAsStreamAsync();
+            dropDown = await JsonSerializer.DeserializeAsync
+                <IEnumerable<CapsuleNameModel>>(responseStream);
+            dropDown = dropDown.Where(m => m.status == "active").ToList();
+        }
+        else
+        {
+        }
+
+    }
+
+    private void OnValidSumit()
+    {
+        var result = userData.Update(user);
+
+        if (result.IsSuccess)
+        {
+            toastService.ShowSuccess(result.Message);
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            toastService.ShowError(result.Message);
+        }
+    }
+
+    private void OnCancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

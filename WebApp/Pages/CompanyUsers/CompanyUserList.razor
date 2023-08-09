@@ -1,0 +1,112 @@
+﻿@page "/company-user/{Id}"
+
+@using Syncfusion.Blazor.DropDowns
+@using System.Collections.Specialized
+@using System.Collections
+@inject IGenericRepository<CompanyUser> repositoryComp;
+@inject ICompanyUserRepository srv;
+@inject NavigationManager NavigationManager
+
+@if (compUser != null)
+{
+    <button type="button" @onclick="Add" class="btn btn-primary">Add Company User</button>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                @*<th>Company Name</th>*@
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in compUser)
+            {
+                <tr>
+                    <td>@item.Company.NameEn</td>
+                    @*<td>@item.Company.NameEn</td>*@
+                    <td>@item.FullName</td>
+                    <td>@item.EmailId</td>
+                    <td>@item.Role</td>
+                    <td>
+                        <button type="button" @onclick="@(() => Edit(item))" class="btn btn-link">Edit</button>
+                        @if(item.IsActive == true)
+                        {
+                           <button type="button" @onclick="@(() => Deactivate(item))" class="btn btn-link">Deactivate</button>
+                        }
+                        @if (item.IsActive != true)
+                        {
+                            <button type="button" @onclick="@(() => Deactivate(item))" class="btn btn-link">Activate</button>
+                        }
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<br />
+@*<div class="position-relative overflow-hidden p-3 p-md-5 m-md-3 text-center bg-light">
+    <div class="col-md-5 p-lg-5 mx-auto my-5">
+        <h1 class="display-4 fw-normal">MahadJobs Admin Console</h1>
+
+    </div>
+    <div class="product-device shadow-sm d-none d-md-block"></div>
+    <div class="product-device product-device-2 shadow-sm d-none d-md-block"></div>
+</div>*@
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private IEnumerable<CompanyUser> compUser;
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        LoadList();
+
+    }
+    private void LoadList()
+    {
+        if (int.TryParse(this.Id, out int iId))
+        {
+            compUser = srv.GetUserByCompanyId(iId);
+        }
+    }
+
+    private void Edit(CompanyUser model)
+    {
+        NavigationManager.NavigateTo($"/edit-company-user/{Id}/{model.Id}");
+    }
+
+    private void Deactivate(CompanyUser model)
+    {
+        bool val = true;
+        if (model.IsActive == null)
+        {
+
+        }
+        else
+        {
+            if (model.IsActive == true)
+            {
+                val = false;
+            }
+            else
+            {
+                val = true;
+            }
+        }
+        srv.ToggleActive(model.Id,val);
+        LoadList();
+        //NavigationManager.NavigateTo($"/edit-visaStatus/{model.Id}");
+    }
+    private void Add()
+    {
+        NavigationManager.NavigateTo($"/add-company-user/{Id}");
+    }
+
+
+
+}
